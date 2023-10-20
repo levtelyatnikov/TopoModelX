@@ -48,6 +48,8 @@ class AllSet(torch.nn.Module):
         mlp_activation=None,
         mlp_dropout=0.0,
         mlp_norm=None,
+        task_level='node',
+        
     ):
         super().__init__()
         layers = [
@@ -76,6 +78,12 @@ class AllSet(torch.nn.Module):
             )
         self.layers = torch.nn.ModuleList(layers)
         self.linear = torch.nn.Linear(hidden_channels, out_channels)
+        if task_level == 'node':
+            self.pool = False
+        else:
+            self.pool = True
+        
+
 
     def forward(self, x_0, incidence_1):
         """Forward computation.
@@ -99,5 +107,12 @@ class AllSet(torch.nn.Module):
 
         for layer in self.layers:
             x_0 = layer(x_0, incidence_1)
-        pooled_x = torch.max(x_0, dim=0)[0]
-        return torch.sigmoid(self.linear(pooled_x))[0]
+        
+        if self.pool == True:
+            pooled_x = torch.max(x_0, dim=0)[0]
+            #out = torch.sigmoid(self.linear(pooled_x))[0]
+        else:
+            out = self.linear(x_0)
+    
+        return  out
+
